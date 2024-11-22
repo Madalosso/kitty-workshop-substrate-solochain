@@ -47,6 +47,7 @@ pub mod pallet {
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type NativeBalance: Inspect<Self::AccountId> + Mutate<Self::AccountId>;
+        type WeightInfo: WeightInfo;
     }
 
     pub type BalanceOf<T> =
@@ -162,7 +163,8 @@ pub mod pallet {
         ///
         /// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
         /// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
-        // #[pallet::call_index(0)]
+        #[pallet::call_index(0)]
+        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn do_somethingsometihng(origin: OriginFor<T>, something: u32) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
@@ -190,7 +192,8 @@ pub mod pallet {
         /// - If no value has been set ([`Error::NoneValue`])
         /// - If incrementing the value in storage causes an arithmetic overflow
         ///   ([`Error::StorageOverflow`])
-        // #[pallet::call_index(1)]
+        #[pallet::call_index(1)]
+        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
 
@@ -208,6 +211,8 @@ pub mod pallet {
                 }
             }
         }
+        #[pallet::call_index(2)]
+        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             let dna = Self::gen_dna();
@@ -215,6 +220,8 @@ pub mod pallet {
             Ok(())
         }
 
+        #[pallet::call_index(3)]
+        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn transfer(
             origin: OriginFor<T>,
             to: T::AccountId,
@@ -225,6 +232,8 @@ pub mod pallet {
             Ok(())
         }
 
+        #[pallet::call_index(4)]
+        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn set_price(
             origin: OriginFor<T>,
             kitty_id: [u8; 32],
@@ -236,6 +245,8 @@ pub mod pallet {
             Ok(())
         }
 
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::WeightInfo::do_something())]
         pub fn buy_kitty(
             origin: OriginFor<T>,
             kitty_id: [u8; 32],
