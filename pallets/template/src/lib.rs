@@ -1,55 +1,19 @@
-//! # Template Pallet
-//!
-//! A pallet with minimal functionality to help developers understand the essential components of
-//! writing a FRAME pallet. It is typically used in beginner tutorials or in Substrate template
-//! nodes as a starting point for creating a new pallet and **not meant to be used in production**.
-//!
-//! ## Overview
-//!
-//! This template pallet contains basic examples of:
-//! - declaring a storage item that stores a single `u32` value
-//! - declaring and using events
-//! - declaring and using errors
-//! - a dispatchable function that allows a user to set a new value to storage and emits an event
-//!   upon success
-//! - another dispatchable function that causes a custom error to be thrown
-//!
-//! Each pallet section is annotated with an attribute using the `#[pallet::...]` procedural macro.
-//! This macro generates the necessary code for a pallet to be aggregated into a FRAME runtime.
-//!
-//! Learn more about FRAME macros [here](https://docs.substrate.io/reference/frame-macros/).
-//!
-//! ### Pallet Sections
-//!
-//! The pallet sections in this template are:
-//!
-//! - A **configuration trait** that defines the types and parameters which the pallet depends on
-//!   (denoted by the `#[pallet::config]` attribute). See: [`Config`].
-//! - A **means to store pallet-specific data** (denoted by the `#[pallet::storage]` attribute).
-//!   See: [`storage_types`].
-//! - A **declaration of the events** this pallet emits (denoted by the `#[pallet::event]`
-//!   attribute). See: [`Event`].
-//! - A **declaration of the errors** that this pallet can throw (denoted by the `#[pallet::error]`
-//!   attribute). See: [`Error`].
-//! - A **set of dispatchable functions** that define the pallet's functionality (denoted by the
-//!   `#[pallet::call]` attribute). See: [`dispatchables`].
-//!
-//! Run `cargo doc --package pallet-template --open` to view this pallet's documentation.
-
-// We make sure this pallet uses `no_std` for compiling to Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
+use frame::prelude::*;
+use frame::traits::fungible::{Inspect, Mutate};
 pub use pallet::*;
 
 // FRAME pallets require their own "mock runtimes" to be able to run unit tests. This module
 // contains a mock runtime specific for testing this pallet's functionality.
-#[cfg(test)]
-mod mock;
+// #[cfg(test)]
+// mod mock;
 
 // This module contains the unit tests for this pallet.
 // Learn about pallet unit testing here: https://docs.substrate.io/test/unit-testing/
-#[cfg(test)]
+// #[cfg(test)]
+mod impls;
 mod tests;
 
 // Every callable function or "dispatchable" a pallet exposes must have weight values that correctly
@@ -61,17 +25,17 @@ pub mod weights;
 pub use weights::*;
 
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
-#[frame_support::pallet]
+// #[frame_support::pallet]
+#[frame::pallet(dev_mode)]
 pub mod pallet {
     // Import various useful types required by all FRAME pallets.
     use super::*;
-    use frame_support::pallet_prelude::*;
-    use frame_system::pallet_prelude::*;
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
     #[pallet::pallet]
-    pub struct Pallet<T>(_);
+    // pub struct Pallet<T>(_);
+    pub struct Pallet<T>(core::marker::PhantomData<T>); // ???
 
     /// The pallet's configuration trait.
     ///
@@ -82,16 +46,38 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        /// A type representing the weights required by the dispatchables of this pallet.
-        type WeightInfo: WeightInfo;
+        type NativeBalance: Inspect<Self::AccountId> + Mutate<Self::AccountId>;
     }
 
+    pub type BalanceOf<T> =
+        <<T as Config>::NativeBalance as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
+
+    #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
+    pub struct Kitty<T: Config> {
+        pub dna: [u8; 32],
+        pub owner: T::AccountId,
+        pub price: Option<BalanceOf<T>>,
+    }
     /// A storage item for this pallet.
     ///
     /// In this template, we are declaring a storage item called `Something` that stores a single
     /// `u32` value. Learn more about runtime storage here: <https://docs.substrate.io/build/runtime-storage/>
     #[pallet::storage]
     pub type Something<T> = StorageValue<_, u32>;
+
+    #[pallet::storage]
+    pub(super) type CountForKitties<T: Config> = StorageValue<Value = u32, QueryKind = ValueQuery>;
+
+    #[pallet::storage]
+    pub(super) type Kitties<T: Config> = StorageMap<Key = [u8; 32], Value = Kitty<T>>;
+
+    #[pallet::storage]
+    pub(super) type KittiesOwned<T: Config> = StorageMap<
+        Key = T::AccountId,
+        Value = BoundedVec<[u8; 32], ConstU32<100>>,
+        QueryKind = ValueQuery,
+    >;
 
     /// Events that functions in this pallet can emit.
     ///
@@ -113,6 +99,24 @@ pub mod pallet {
             /// The account who set the new value.
             who: T::AccountId,
         },
+        Created {
+            owner: T::AccountId,
+        },
+        Transferred {
+            from: T::AccountId,
+            to: T::AccountId,
+            kitty_id: [u8; 32],
+        },
+        PriceSet {
+            owner: T::AccountId,
+            kitty_id: [u8; 32],
+            new_price: Option<BalanceOf<T>>,
+        },
+        Sold {
+            buyer: T::AccountId,
+            kitty_id: [u8; 32],
+            price: BalanceOf<T>,
+        },
     }
 
     /// Errors that can be returned by this pallet.
@@ -129,6 +133,14 @@ pub mod pallet {
         NoneValue,
         /// There was an attempt to increment the value in storage over `u32::MAX`.
         StorageOverflow,
+        TooManyKitties,
+        DuplicatedKitty,
+        NoKitty,
+        TooManyOwned,
+        NotOwner,
+        TransferToSelf,
+        NotForSale,
+        MaxPriceTooLow,
     }
 
     /// The pallet's dispatchable functions ([`Call`]s).
@@ -150,8 +162,7 @@ pub mod pallet {
         ///
         /// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
         /// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
-        #[pallet::call_index(0)]
-        #[pallet::weight(T::WeightInfo::do_something())]
+        // #[pallet::call_index(0)]
         pub fn do_somethingsometihng(origin: OriginFor<T>, something: u32) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
@@ -179,8 +190,7 @@ pub mod pallet {
         /// - If no value has been set ([`Error::NoneValue`])
         /// - If incrementing the value in storage causes an arithmetic overflow
         ///   ([`Error::StorageOverflow`])
-        #[pallet::call_index(1)]
-        #[pallet::weight(T::WeightInfo::cause_error())]
+        // #[pallet::call_index(1)]
         pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
             let _who = ensure_signed(origin)?;
 
@@ -197,6 +207,43 @@ pub mod pallet {
                     Ok(())
                 }
             }
+        }
+        pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+            let dna = Self::gen_dna();
+            Self::mint(who, dna)?;
+            Ok(())
+        }
+
+        pub fn transfer(
+            origin: OriginFor<T>,
+            to: T::AccountId,
+            kitty_id: [u8; 32],
+        ) -> DispatchResult {
+            let from = ensure_signed(origin)?;
+            Self::do_transfer(from, to, kitty_id)?;
+            Ok(())
+        }
+
+        pub fn set_price(
+            origin: OriginFor<T>,
+            kitty_id: [u8; 32],
+            price: Option<BalanceOf<T>>,
+        ) -> DispatchResult {
+            let from = ensure_signed(origin)?;
+
+            Self::do_set_price(from, kitty_id, price)?;
+            Ok(())
+        }
+
+        pub fn buy_kitty(
+            origin: OriginFor<T>,
+            kitty_id: [u8; 32],
+            max_price: BalanceOf<T>,
+        ) -> DispatchResult {
+            let from = ensure_signed(origin)?;
+            Self::do_buy_kitty(from, kitty_id, max_price)?;
+            Ok(())
         }
     }
 }
