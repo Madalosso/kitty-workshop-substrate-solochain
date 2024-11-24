@@ -7,7 +7,34 @@ created by following [Shawntabrizi's Substrate Collectables Workshop](https://gi
 The repository containing the step-by-step implementation can be found [here](https://github.com/Madalosso/substrate-collectibles-workshop-omm)
 This repo delivers an assignment for a Rust + Substrate + Ink! + Polkadot course.
 
-# Original repo:
+## Instructions
+### Run tests for the workspace
+`cargo test`
+
+### Build the project for release
+`cargo build --release`
+
+### Run node with custom pallet:
+After running the build for release command
+`./target/release/solochain-template-node --dev`
+
+If the commands run successfully you should be able to access this [dashboard](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer) targeting the local RPC address.
+
+Extrinsics for the custom pallet can be performed here.
+1. Mint
+2. Transfer
+
+Events can be observed at the [explorer](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer)
+* Created
+* Transferred
+
+Storage can be observed at [chainstate](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/chainstate) by selecting "templateModules" and inspecting
+* countForKitties - amount of minted kittens
+* Kitties([u8;32]) - to retrieve a kitty data
+* kittiesOwned(AccountId32) - to return a list of owned kitties by an accountId
+ 
+
+## Original repo:
 https://github.com/paritytech/substrate-contracts-node
 
 <details>
