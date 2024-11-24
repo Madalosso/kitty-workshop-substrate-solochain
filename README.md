@@ -1,3 +1,18 @@
+# Substrate Node Template with kitty trade pallet (collectible)
+
+This repo, created out of the [node template by Parity](https://github.com/paritytech/substrate-contracts-node), carries a pallet 
+created by following [Shawntabrizi's Substrate Collectables Workshop](https://github.com/shawntabrizi/substrate-collectables-workshop) 
+(without including the marketplace functionalities). 
+
+The repository containing the step-by-step implementation can be found [here](https://github.com/Madalosso/substrate-collectibles-workshop-omm)
+This repo delivers an assignment for a Rust + Substrate + Ink! + Polkadot course.
+
+# Original repo:
+https://github.com/paritytech/substrate-contracts-node
+
+<details>
+  <summary>Original README.md </summary>
+
 # Substrate Node Template
 
 A fresh [Substrate](https://substrate.io/) node, ready for hacking :rocket:
@@ -222,3 +237,4 @@ the correct dependencies, activate direnv `direnv allow`.
 Please follow the [Substrate Docker instructions
 here](https://github.com/paritytech/polkadot-sdk/blob/master/substrate/docker/README.md) to
 build the Docker container with the Substrate Node Template binary.
+</details>
