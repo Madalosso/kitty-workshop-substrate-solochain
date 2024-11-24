@@ -17,7 +17,6 @@ use frame::deps::sp_io;
 use frame::runtime::prelude::*;
 use frame::testing_prelude::*;
 use frame::traits::fungible::*;
-use frame_system::WeightInfo;
 
 type Balance = u64;
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
@@ -67,7 +66,7 @@ impl pallet_balances::Config for TestRuntime {
 // will also need to update this configuration to represent that.
 impl pallet_kitties::Config for TestRuntime {
     type RuntimeEvent = RuntimeEvent;
-    type WeightInfo: WeightInfo;
+    // type WeightInfo: WeightInfo;
     // type NativeBalance = PalletBalances;
 }
 
