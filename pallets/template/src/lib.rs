@@ -20,8 +20,8 @@ mod tests;
 // for each dispatchable and generates this pallet's weight.rs file. Learn more about benchmarking here: https://docs.substrate.io/test/benchmark/
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-// pub mod weights;
-// pub use weights::*;
+pub mod weights;
+pub use weights::*;
 
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 // #[frame_support::pallet]
