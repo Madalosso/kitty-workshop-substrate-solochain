@@ -20,8 +20,8 @@ mod tests;
 // for each dispatchable and generates this pallet's weight.rs file. Learn more about benchmarking here: https://docs.substrate.io/test/benchmark/
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-// pub mod weights;
-// pub use weights::*;
+pub mod weights;
+pub use weights::*;
 
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 // #[frame_support::pallet]
@@ -42,22 +42,18 @@ pub mod pallet {
     /// These types are defined generically and made concrete when the pallet is declared in the
     /// `runtime/src/lib.rs` file of your chain.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::Config + pallet_balances::Config {
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        // type WeightInfo: WeightInfo;
-        // type NativeBalance: Inspect<Self::AccountId> + Mutate<Self::AccountId>;
+        type WeightInfo: WeightInfo;
     }
-
-    // pub type BalanceOf<T> =
-    //     <<T as Config>::NativeBalance as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
     #[scale_info(skip_type_params(T))]
     pub struct Kitty<T: Config> {
         pub dna: [u8; 32],
         pub owner: T::AccountId,
-        // pub price: Option<BalanceOf<T>>,
+        pub price: Option<T::Balance>,
     }
     /// A storage item for this pallet.
     ///
@@ -107,16 +103,16 @@ pub mod pallet {
             to: T::AccountId,
             kitty_id: [u8; 32],
         },
-        // PriceSet {
-        //     owner: T::AccountId,
-        //     kitty_id: [u8; 32],
-        //     new_price: Option<BalanceOf<T>>,
-        // },
-        // Sold {
-        //     buyer: T::AccountId,
-        //     kitty_id: [u8; 32],
-        //     price: BalanceOf<T>,
-        // },
+        PriceSet {
+            owner: T::AccountId,
+            kitty_id: [u8; 32],
+            new_price: T::Balance,
+        },
+        Sold {
+            buyer: T::AccountId,
+            kitty_id: [u8; 32],
+            price: T::Balance,
+        },
     }
 
     /// Errors that can be returned by this pallet.
@@ -163,7 +159,7 @@ pub mod pallet {
         /// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
         /// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
         #[pallet::call_index(0)]
-        // #[pallet::weight(T::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
         pub fn do_somethingsometihng(origin: OriginFor<T>, something: u32) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
@@ -236,7 +232,7 @@ pub mod pallet {
         // pub fn set_price(
         //     origin: OriginFor<T>,
         //     kitty_id: [u8; 32],
-        //     price: Option<BalanceOf<T>>,
+        //     price: Option<T::Balance>,
         // ) -> DispatchResult {
         //     let from = ensure_signed(origin)?;
 
@@ -249,7 +245,7 @@ pub mod pallet {
         // pub fn buy_kitty(
         //     origin: OriginFor<T>,
         //     kitty_id: [u8; 32],
-        //     max_price: BalanceOf<T>,
+        //     max_price: T::Balance,
         // ) -> DispatchResult {
         //     let from = ensure_signed(origin)?;
         //     Self::do_buy_kitty(from, kitty_id, max_price)?;

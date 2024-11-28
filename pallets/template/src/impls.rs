@@ -133,7 +133,7 @@ impl<T: Config> Pallet<T> {
     // pub fn do_set_price(
     //     from: T::AccountId,
     //     kitty_id: [u8; 32],
-    //     price: Option<BalanceOf<T>>,
+    //     price: Option<T::Balance>,
     // ) -> DispatchResult {
     //     let mut kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
     //     ensure!(kitty.owner == from, Error::<T>::NotOwner);
@@ -149,36 +149,45 @@ impl<T: Config> Pallet<T> {
     //     });
     //     return Ok(());
     // }
-    // pub fn do_buy_kitty(
-    //     buyer: T::AccountId,
-    //     kitty_id: [u8; 32],
-    //     max_price: BalanceOf<T>,
-    // ) -> DispatchResult {
-    //     let buyer_address = buyer.clone();
-    //     // Question: Really necessary to check the existence of kitty_id if calling do_transfer (which already do that?)
-    //     let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
+    pub fn do_buy_kitty(
+        buyer: T::AccountId,
+        kitty_id: [u8; 32],
+        max_price: T::Balance,
+    ) -> DispatchResult {
+        let buyer_address = buyer.clone();
+        // Question: Really necessary to check the existence of kitty_id if calling do_transfer (which already do that?)
+        let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
 
-    //     // Assert is for sale and buyer max price covers the sale price
-    //     let price = match kitty.price {
-    //         Some(price) => {
-    //             if price > max_price {
-    //                 return Err(Error::<T>::MaxPriceTooLow.into());
-    //             }
-    //             price
-    //         }
-    //         None => return Err(Error::<T>::NotForSale.into()),
-    //     };
+        // Assert is for sale and buyer max price covers the sale price
+        let price = match kitty.price {
+            Some(price) => {
+                if price > max_price {
+                    return Err(Error::<T>::MaxPriceTooLow.into());
+                }
+                price
+            }
+            None => return Err(Error::<T>::NotForSale.into()),
+        };
 
-    //     T::NativeBalance::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
+        //
+        // TODO:inspect pallet, look for transfer function
+        let saldo = pallet_balances::Pallet::<T>::free_balance(&buyer);
+        // pallet_balances::Pallet::<T>::transfer(
+        //     &buyer,
+        //     &kitty.owner,
+        //     price,
+        //     Preservation::Preserve,
+        // )?;
+        // T::NativeBalance::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
 
-    //     // maybe refactor to accept &mut buyer? ownership move cause `buyer_address`
-    //     Self::do_transfer(kitty.owner, buyer, kitty_id)?;
+        // maybe refactor to accept &mut buyer? ownership move cause `buyer_address`
+        Self::do_transfer(kitty.owner, buyer, kitty_id)?;
 
-    //     Self::deposit_event(Event::<T>::Sold {
-    //         buyer: buyer_address,
-    //         kitty_id,
-    //         price,
-    //     });
-    //     return Ok(());
-    // }
+        Self::deposit_event(Event::<T>::Sold {
+            buyer: buyer_address,
+            kitty_id,
+            price,
+        });
+        return Ok(());
+    }
 }
