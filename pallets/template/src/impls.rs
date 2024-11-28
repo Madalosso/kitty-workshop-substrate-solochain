@@ -2,7 +2,7 @@ use super::*;
 use frame::prelude::*;
 use frame::primitives::BlakeTwo256;
 use frame::traits::tokens::Preservation;
-use frame::traits::Hash;
+use frame::traits::{Currency, ExistenceRequirement::KeepAlive, Hash};
 
 impl<T: Config> Pallet<T> {
     pub fn gen_dna() -> [u8; 32] {
@@ -125,7 +125,6 @@ impl<T: Config> Pallet<T> {
         Kitties::<T>::insert(dna, kitty);
         KittiesOwned::<T>::try_append(&owner, dna).map_err(|_| Error::<T>::TooManyOwned)?;
 
-        // Maybe include new mint id here? (counter)
         Self::deposit_event(Event::<T>::Created {
             owner,
             kitty_id: dna,
@@ -175,23 +174,24 @@ impl<T: Config> Pallet<T> {
 
         //
         // TODO:inspect pallet, look for transfer function
-        let saldo = pallet_balances::Pallet::<T>::free_balance(&buyer);
+        // let saldo = pallet_balances::Pallet::<T>::free_balance(&buyer);
         // pallet_balances::Pallet::<T>::transfer(
-        //     &buyer,
-        //     &kitty.owner,
-        //     price,
-        //     Preservation::Preserve,
-        // )?;
+        pallet_balances::Pallet::<T>::transfer(&buyer, &kitty.owner, price, KeepAlive)?;
         // T::NativeBalance::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
 
         // maybe refactor to accept &mut buyer? ownership move cause `buyer_address`
-        Self::do_transfer(kitty.owner, buyer, kitty_id)?;
+        Self::do_transfer(kitty.owner, buyer.clone(), kitty_id)?;
+
+        // Call set price to remove the price.
+        // Q: Worth to use this method instead of directly setting the price to None?
+        Self::do_set_price(buyer, kitty_id, None)?;
 
         Self::deposit_event(Event::<T>::Sold {
             buyer: buyer_address,
             kitty_id,
             price,
         });
+
         return Ok(());
     }
 }
