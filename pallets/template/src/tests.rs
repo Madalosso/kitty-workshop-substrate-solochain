@@ -31,7 +31,7 @@ const BOB: u64 = 2;
 const DEFAULT_KITTY: Kitty<TestRuntime> = Kitty {
     dna: [0u8; 32],
     owner: 0,
-    // price: None,
+    price: None,
 };
 
 // Our blockchain tests only need 3 Pallets:

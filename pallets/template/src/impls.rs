@@ -100,7 +100,7 @@ impl<T: Config> Pallet<T> {
         let kitty = Kitty {
             dna,
             owner: owner.clone(),
-            // price: None,
+            price: None,
         };
 
         // Ensure dna not present already
@@ -126,29 +126,33 @@ impl<T: Config> Pallet<T> {
         KittiesOwned::<T>::try_append(&owner, dna).map_err(|_| Error::<T>::TooManyOwned)?;
 
         // Maybe include new mint id here? (counter)
-        Self::deposit_event(Event::<T>::Created { owner });
+        Self::deposit_event(Event::<T>::Created {
+            owner,
+            kitty_id: dna,
+        });
         Ok(())
     }
 
-    // pub fn do_set_price(
-    //     from: T::AccountId,
-    //     kitty_id: [u8; 32],
-    //     price: Option<T::Balance>,
-    // ) -> DispatchResult {
-    //     let mut kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
-    //     ensure!(kitty.owner == from, Error::<T>::NotOwner);
+    pub fn do_set_price(
+        from: T::AccountId,
+        kitty_id: [u8; 32],
+        price: Option<T::Balance>,
+    ) -> DispatchResult {
+        let mut kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
+        ensure!(kitty.owner == from, Error::<T>::NotOwner);
 
-    //     kitty.price = price;
+        kitty.price = price;
 
-    //     Kitties::<T>::insert(kitty_id, kitty);
+        Kitties::<T>::insert(kitty_id, kitty);
 
-    //     Self::deposit_event(Event::<T>::PriceSet {
-    //         owner: from,
-    //         kitty_id,
-    //         new_price: price,
-    //     });
-    //     return Ok(());
-    // }
+        Self::deposit_event(Event::<T>::PriceSet {
+            owner: from,
+            kitty_id,
+            new_price: price,
+        });
+        return Ok(());
+    }
+
     pub fn do_buy_kitty(
         buyer: T::AccountId,
         kitty_id: [u8; 32],
