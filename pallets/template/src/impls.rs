@@ -2,7 +2,7 @@ use super::*;
 use frame::prelude::*;
 use frame::primitives::BlakeTwo256;
 use frame::traits::tokens::Preservation;
-use frame::traits::Hash;
+use frame::traits::{Currency, ExistenceRequirement::KeepAlive, Hash};
 
 impl<T: Config> Pallet<T> {
     pub fn gen_dna() -> [u8; 32] {
@@ -100,7 +100,7 @@ impl<T: Config> Pallet<T> {
         let kitty = Kitty {
             dna,
             owner: owner.clone(),
-            // price: None,
+            price: None,
         };
 
         // Ensure dna not present already
@@ -125,60 +125,73 @@ impl<T: Config> Pallet<T> {
         Kitties::<T>::insert(dna, kitty);
         KittiesOwned::<T>::try_append(&owner, dna).map_err(|_| Error::<T>::TooManyOwned)?;
 
-        // Maybe include new mint id here? (counter)
-        Self::deposit_event(Event::<T>::Created { owner });
+        Self::deposit_event(Event::<T>::Created {
+            owner,
+            kitty_id: dna,
+        });
         Ok(())
     }
 
-    // pub fn do_set_price(
-    //     from: T::AccountId,
-    //     kitty_id: [u8; 32],
-    //     price: Option<BalanceOf<T>>,
-    // ) -> DispatchResult {
-    //     let mut kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
-    //     ensure!(kitty.owner == from, Error::<T>::NotOwner);
+    pub fn do_set_price(
+        from: T::AccountId,
+        kitty_id: [u8; 32],
+        price: Option<T::Balance>,
+    ) -> DispatchResult {
+        let mut kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
+        ensure!(kitty.owner == from, Error::<T>::NotOwner);
 
-    //     kitty.price = price;
+        kitty.price = price;
 
-    //     Kitties::<T>::insert(kitty_id, kitty);
+        Kitties::<T>::insert(kitty_id, kitty);
 
-    //     Self::deposit_event(Event::<T>::PriceSet {
-    //         owner: from,
-    //         kitty_id,
-    //         new_price: price,
-    //     });
-    //     return Ok(());
-    // }
-    // pub fn do_buy_kitty(
-    //     buyer: T::AccountId,
-    //     kitty_id: [u8; 32],
-    //     max_price: BalanceOf<T>,
-    // ) -> DispatchResult {
-    //     let buyer_address = buyer.clone();
-    //     // Question: Really necessary to check the existence of kitty_id if calling do_transfer (which already do that?)
-    //     let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
+        Self::deposit_event(Event::<T>::PriceSet {
+            owner: from,
+            kitty_id,
+            new_price: price,
+        });
+        return Ok(());
+    }
 
-    //     // Assert is for sale and buyer max price covers the sale price
-    //     let price = match kitty.price {
-    //         Some(price) => {
-    //             if price > max_price {
-    //                 return Err(Error::<T>::MaxPriceTooLow.into());
-    //             }
-    //             price
-    //         }
-    //         None => return Err(Error::<T>::NotForSale.into()),
-    //     };
+    pub fn do_buy_kitty(
+        buyer: T::AccountId,
+        kitty_id: [u8; 32],
+        max_price: T::Balance,
+    ) -> DispatchResult {
+        let buyer_address = buyer.clone();
+        // Question: Really necessary to check the existence of kitty_id if calling do_transfer (which already do that?)
+        let kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
 
-    //     T::NativeBalance::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
+        // Assert is for sale and buyer max price covers the sale price
+        let price = match kitty.price {
+            Some(price) => {
+                if price > max_price {
+                    return Err(Error::<T>::MaxPriceTooLow.into());
+                }
+                price
+            }
+            None => return Err(Error::<T>::NotForSale.into()),
+        };
 
-    //     // maybe refactor to accept &mut buyer? ownership move cause `buyer_address`
-    //     Self::do_transfer(kitty.owner, buyer, kitty_id)?;
+        //
+        // TODO:inspect pallet, look for transfer function
+        // let saldo = pallet_balances::Pallet::<T>::free_balance(&buyer);
+        // pallet_balances::Pallet::<T>::transfer(
+        pallet_balances::Pallet::<T>::transfer(&buyer, &kitty.owner, price, KeepAlive)?;
+        // T::NativeBalance::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
 
-    //     Self::deposit_event(Event::<T>::Sold {
-    //         buyer: buyer_address,
-    //         kitty_id,
-    //         price,
-    //     });
-    //     return Ok(());
-    // }
+        // maybe refactor to accept &mut buyer? ownership move cause `buyer_address`
+        Self::do_transfer(kitty.owner, buyer.clone(), kitty_id)?;
+
+        // Call set price to remove the price.
+        // Q: Worth to use this method instead of directly setting the price to None?
+        Self::do_set_price(buyer, kitty_id, None)?;
+
+        Self::deposit_event(Event::<T>::Sold {
+            buyer: buyer_address,
+            kitty_id,
+            price,
+        });
+
+        return Ok(());
+    }
 }
