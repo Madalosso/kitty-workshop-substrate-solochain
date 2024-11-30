@@ -1,7 +1,5 @@
 use super::*;
-use frame::prelude::*;
 use frame::primitives::BlakeTwo256;
-use frame::traits::tokens::Preservation;
 use frame::traits::{Currency, ExistenceRequirement::KeepAlive, Hash};
 
 impl<T: Config> Pallet<T> {

@@ -6,8 +6,8 @@ pub use pallet::*;
 
 // FRAME pallets require their own "mock runtimes" to be able to run unit tests. This module
 // contains a mock runtime specific for testing this pallet's functionality.
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
 // This module contains the unit tests for this pallet.
 // Learn about pallet unit testing here: https://docs.substrate.io/test/unit-testing/
@@ -45,7 +45,7 @@ pub mod pallet {
     pub trait Config: frame_system::Config + pallet_balances::Config {
         /// The overarching runtime event type.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        // type WeightInfo: WeightInfo;
+        type WeightInfo: WeightInfo;
     }
 
     #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
@@ -208,7 +208,7 @@ pub mod pallet {
         //     }
         // }
         #[pallet::call_index(0)]
-        // #[pallet::weight(T::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
         pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             let dna = Self::gen_dna();
@@ -217,7 +217,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        // #[pallet::weight(T::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
         pub fn transfer(
             origin: OriginFor<T>,
             to: T::AccountId,
@@ -229,7 +229,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        // #[pallet::weight(T::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
         pub fn set_price(
             origin: OriginFor<T>,
             kitty_id: [u8; 32],
@@ -242,7 +242,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        // #[pallet::weight(T::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
         pub fn buy_kitty(
             origin: OriginFor<T>,
             kitty_id: [u8; 32],

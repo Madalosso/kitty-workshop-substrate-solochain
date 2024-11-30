@@ -11,8 +11,8 @@
 // This flag tells rust to only run this file when running `cargo test`.
 #![cfg(test)]
 
-use crate as pallet_kitties;
 use crate::*;
+use crate::{self as pallet_kitties};
 use frame::deps::sp_io;
 use frame::runtime::prelude::*;
 use frame::testing_prelude::*;
@@ -66,8 +66,7 @@ impl pallet_balances::Config for TestRuntime {
 // will also need to update this configuration to represent that.
 impl pallet_kitties::Config for TestRuntime {
     type RuntimeEvent = RuntimeEvent;
-    // type WeightInfo: WeightInfo;
-    // type NativeBalance = PalletBalances;
+    type WeightInfo = (); // TODO: investigate why this works
 }
 
 // We need to run most of our tests using this function: `new_test_ext().execute_with(|| { ... });`
