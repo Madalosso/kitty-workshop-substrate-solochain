@@ -33,8 +33,13 @@ Storage can be observed at [chainstate](https://polkadot.js.org/apps/?rpc=ws%3A%
 * Kitties([u8;32]) - to retrieve a kitty data
 * kittiesOwned(AccountId32) - to return a list of owned kitties by an accountId
  
+## TODO/Improve:
+- [ ] Migrate frame -> frame_support
+- [ ] Implement Bencharmking
+- [ ] Make usage of weights
 
-## Original repo:
+
+## Workshop implementation standalone repo:
 https://github.com/paritytech/substrate-contracts-node
 
 <details>
