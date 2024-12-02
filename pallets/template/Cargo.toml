@@ -19,22 +19,20 @@ codec = { features = [
 scale-info = { features = [
 	"derive",
 ], workspace = true }
-pallet-balances.workspace = true
-frame = { version = "0.7.0", package = "polkadot-sdk-frame", default-features = false, features = ["experimental", "runtime"] }
 frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
 
 [dev-dependencies]
 sp-core = { default-features = true, workspace = true }
-sp-io = { default-features = true, workspace = true }
-sp-runtime = { default-features = true, workspace = true }
+pallet-balances = { default-features = true, workspace = true }
 
 [features]
 default = ["std"]
 std = [
 	"codec/std",
-	"frame/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",

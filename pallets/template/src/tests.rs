@@ -13,12 +13,11 @@
 
 use crate::mock::{new_test_ext, RuntimeEvent, RuntimeOrigin, TestRuntime};
 use crate::*;
-// use frame::deps::frame_support::runtime;
-// use frame::deps::sp_io;
-// use frame::runtime::prelude::*;
-use frame::testing_prelude::*;
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::{assert_noop, assert_ok};
 use mock::{PalletBalances, PalletKitties, System};
-// use frame::traits::fungible::*;
+use scale_info::TypeInfo;
+use sp_runtime::{ArithmeticError, DispatchError};
 
 type Balance = u64;
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
@@ -439,7 +438,7 @@ fn do_buy_kitty_logic_works() {
         // Cannot buy kitty if you don't have the funds.
         assert_noop!(
             PalletKitties::buy_kitty(RuntimeOrigin::signed(BOB), kitty_id, 1337),
-            frame::arithmetic::ArithmeticError::Underflow
+            ArithmeticError::Underflow
         );
         // Cannot buy kitty if it would kill your account (i.e. set your balance to 0).
         // assert_ok!(PalletBalances::mint_into(&BOB, 1337));

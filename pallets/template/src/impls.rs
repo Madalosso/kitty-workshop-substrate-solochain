@@ -1,6 +1,9 @@
 use super::*;
-use frame::primitives::BlakeTwo256;
-use frame::traits::{Currency, ExistenceRequirement::KeepAlive, Hash};
+use codec::Encode;
+use frame_support::pallet_prelude::*;
+use frame_support::traits::fungible::Mutate;
+use frame_support::traits::tokens::Preservation;
+use sp_io::hashing::blake2_256;
 
 impl<T: Config> Pallet<T> {
     pub fn gen_dna() -> [u8; 32] {
@@ -10,8 +13,8 @@ impl<T: Config> Pallet<T> {
             frame_system::Pallet::<T>::extrinsic_index(),
             CountForKitties::<T>::get(),
         );
-        let hash: [u8; 32] = BlakeTwo256::hash_of(&unique_payload).into();
-        return hash;
+        let serialized_payload = unique_payload.encode();
+        blake2_256(&serialized_payload)
     }
 
     pub fn do_transfer(from: T::AccountId, to: T::AccountId, dna: [u8; 32]) -> DispatchResult {
@@ -133,7 +136,7 @@ impl<T: Config> Pallet<T> {
     pub fn do_set_price(
         from: T::AccountId,
         kitty_id: [u8; 32],
-        price: Option<T::Balance>,
+        price: Option<BalanceOf<T>>,
     ) -> DispatchResult {
         let mut kitty = Kitties::<T>::get(kitty_id).ok_or(Error::<T>::NoKitty)?;
         ensure!(kitty.owner == from, Error::<T>::NotOwner);
@@ -153,7 +156,7 @@ impl<T: Config> Pallet<T> {
     pub fn do_buy_kitty(
         buyer: T::AccountId,
         kitty_id: [u8; 32],
-        max_price: T::Balance,
+        max_price: BalanceOf<T>,
     ) -> DispatchResult {
         let buyer_address = buyer.clone();
         // Question: Really necessary to check the existence of kitty_id if calling do_transfer (which already do that?)
@@ -170,12 +173,7 @@ impl<T: Config> Pallet<T> {
             None => return Err(Error::<T>::NotForSale.into()),
         };
 
-        //
-        // TODO:inspect pallet, look for transfer function
-        // let saldo = pallet_balances::Pallet::<T>::free_balance(&buyer);
-        // pallet_balances::Pallet::<T>::transfer(
-        pallet_balances::Pallet::<T>::transfer(&buyer, &kitty.owner, price, KeepAlive)?;
-        // T::NativeBalance::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
+        T::NativeCurrency::transfer(&buyer, &kitty.owner, price, Preservation::Preserve)?;
 
         // maybe refactor to accept &mut buyer? ownership move cause `buyer_address`
         Self::do_transfer(kitty.owner, buyer.clone(), kitty_id)?;
