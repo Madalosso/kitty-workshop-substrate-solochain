@@ -167,59 +167,8 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// An example dispatchable that takes a single u32 value as a parameter, writes the value
         /// to storage and emits an event.
-        ///
-        /// It checks that the _origin_ for this call is _Signed_ and returns a dispatch
-        /// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
-        // #[pallet::call_index(0)]
-        // #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
-        // pub fn do_somethingsometihng(origin: OriginFor<T>, something: u32) -> DispatchResult {
-        //     // Check that the extrinsic was signed and get the signer.
-        //     let who = ensure_signed(origin)?;
-
-        //     // Update storage.
-        //     Something::<T>::put(something);
-
-        //     // Emit an event.
-        //     Self::deposit_event(Event::SomethingStored { something, who });
-
-        //     // Return a successful `DispatchResult`
-        //     Ok(())
-        // }
-
-        /// An example dispatchable that may throw a custom error.
-        ///
-        /// It checks that the caller is a signed origin and reads the current value from the
-        /// `Something` storage item. If a current value exists, it is incremented by 1 and then
-        /// written back to storage.
-        ///
-        /// ## Errors
-        ///
-        /// The function will return an error under the following conditions:
-        ///
-        /// - If no value has been set ([`Error::NoneValue`])
-        /// - If incrementing the value in storage causes an arithmetic overflow
-        ///   ([`Error::StorageOverflow`])
-        // #[pallet::call_index(1)]
-        // // #[pallet::weight(T::WeightInfo::do_something())]
-        // pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-        //     let _who = ensure_signed(origin)?;
-
-        //     // Read a value from storage.
-        //     match Something::<T>::get() {
-        //         // Return an error if the value has not been set.
-        //         None => Err(Error::<T>::NoneValue.into()),
-        //         Some(old) => {
-        //             // Increment the value read from storage. This will cause an error in the event
-        //             // of overflow.
-        //             let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-        //             // Update the value in storage with the incremented result.
-        //             Something::<T>::put(new);
-        //             Ok(())
-        //         }
-        //     }
-        // }
         #[pallet::call_index(0)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::create_kitty())]
         pub fn create_kitty(origin: OriginFor<T>) -> DispatchResult {
             let who = ensure_signed(origin)?;
             let dna = Self::gen_dna();
@@ -228,7 +177,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(1)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::transfer())]
         pub fn transfer(
             origin: OriginFor<T>,
             to: T::AccountId,
@@ -240,7 +189,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(2)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::set_price())]
         pub fn set_price(
             origin: OriginFor<T>,
             kitty_id: [u8; 32],
@@ -253,7 +202,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(3)]
-        #[pallet::weight(<T as pallet::Config>::WeightInfo::do_something())]
+        #[pallet::weight(<T as pallet::Config>::WeightInfo::buy_kitty())]
         pub fn buy_kitty(
             origin: OriginFor<T>,
             kitty_id: [u8; 32],
