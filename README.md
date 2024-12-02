@@ -34,9 +34,12 @@ Storage can be observed at [chainstate](https://polkadot.js.org/apps/?rpc=ws%3A%
 * kittiesOwned(AccountId32) - to return a list of owned kitties by an accountId
  
 ## TODO/Improve:
-- [ ] Migrate frame -> frame_support
-- [ ] Implement Bencharmking
-- [ ] Make usage of weights
+- [x] Migrate frame -> frame_support
+- [x] Implement Bencharmking
+- [x] Make usage of weights
+
+
+Implemented at https://github.com/Madalosso/kitty-workshop-substrate-solochain/pull/2
 
 
 ## Workshop implementation standalone repo:
